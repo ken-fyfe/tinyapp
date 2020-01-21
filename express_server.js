@@ -31,29 +31,40 @@ app.set('view engine', 'ejs');
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
+//
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+//
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
+//
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
+//
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
+//
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
+// generate a tinyURL based on input longURL
 app.post("/urls", (req, res) => {
   const longURL = req.body;
   const tinyURL = generateRandomString();
   urlDatabase[tinyURL] = longURL;
   res.redirect('/urls/:' + tinyURL);
+});
+// deletion of URL ink
+app.post("/urls/:shortURL/delete", (req, res) => {
+  delete urlDatabase[req.params.shortURL];  // why is it not req.body like in "/urls" ?
+  res.redirect('/urls/');
 });
 
 app.listen(PORT, () => {
