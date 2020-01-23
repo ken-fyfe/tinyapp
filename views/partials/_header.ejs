@@ -5,20 +5,19 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
+      <div class="navbar-nav mr-auto">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <%  %>
-        <% if (username) { %>
+      </div>
+      <div class="navbar-nav ml-auto">
+        <% if (email) { %>
           <form method="POST" action= "/logout">
-            Logged in as: <%= username %>
+            Logged in as: <%= email %>
             <input type="submit" value="Logout" class="btn btn-outline-dark">
           </form>
-        <% } else  { %>
-          <form method="POST" action= "/login">
-            <input type="text" name="username" value="">
-            <input type="submit" value="Login" class="btn btn-outline-dark">
-          </form>
+        <% } else { %>
+          <a class="nav-item nav-link" href="/register">Register</a>
+          <a class="nav-item nav-link" href="/login">Login</a>
         <% } %>
       </div>
     </div>
