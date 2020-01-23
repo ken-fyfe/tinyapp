@@ -19,6 +19,9 @@ const app = express();
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
+
 const PORT = 8080; // default port 8080
 
 const urlDatabase = {
@@ -38,7 +41,7 @@ app.get("/hello", (req, res) => {
 });
 // listing of available URLs
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = { urls: urlDatabase, username: '' };  // giving username empty string for now
   res.render("urls_index", templateVars);
 });
 // adding a new URL
@@ -58,36 +61,41 @@ app.get("/u/:shortURL", (req, res) => {
 // generate a tinyURL for longURL
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
-  console.log('longURL :', longURL);
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = longURL;
-  console.log('urlDatabase :', urlDatabase);
-  // res.redirect('/urls/:' + shortURL);
-  res.redirect('/urls/');
+  res.redirect('/urls');
 });
 // deletion of URL ink
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];  // why are we not using req.body like in "/urls" ?
-  res.redirect('/urls/');
+  res.redirect('/urls');
 });
 // updating after editing a long URL
 app.post("/urls/:shortURL/edit", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL] = longURL;
-  res.redirect('/urls/');
+  res.redirect('/urls');
 });
 // edit an existing URL
 app.post("/urls/:shortURL", (req, res) => {
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
+// save login information
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie("username", username);
+  let templateVars = { username: username, urls: urlDatabase };
+  res.render("urls_index", templateVars);
+});
+// logout user from platform
+app.post("/logout", (req, res) => {
+  res.clearCookie("username"); // delete the username key!
+  res.redirect("/urls");
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}! at ${Date()}`);
 });
-
-// TODO
-// pressing EDIT button should go to edit screen
-// when adding a new URL the long URL is not showing up properly
