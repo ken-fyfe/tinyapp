@@ -2,7 +2,8 @@
 
 // TODO
 // 1) create a function to access user and database data
-// 2) implement a simple manner to access user data:
+// 2) use compact syntax for objects user: user => user
+// 3) implement a simple manner to access user data:
 //    app.use((req, res) +>    {
 //      const userID = req.session.userID
 //      const user = users[userid]
@@ -38,6 +39,11 @@ const users = {
   }
 };
 
+const urlDatabase = {
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
+};
+
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
@@ -47,11 +53,6 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
 const PORT = 8080; // default port 8080
-
-const urlDatabase = {
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
-};
 
 app.set('view engine', 'ejs');
 
@@ -83,39 +84,47 @@ app.get("/hello", (req, res) => {
 
 // que up register page
 app.get("/register", (req, res) => {
-  let templateVars = { email: '' };  // giving email empty string for now
+  const user = req.cookies["userID"];
+  console.log('user in /register :', user);
+  let templateVars = { email: '', loggedUserID: user };  // giving email empty string for now
   res.render("register", templateVars);
 });
 
 // que up login page
 app.get("/login", (req, res) => {
-  let templateVars = { email: '' };  // giving email empty string for now
+  const user = req.cookies["userID"];
+  console.log('user in /login :', user);
+  let templateVars = { email: '' , loggedUserID: user };
   res.render("login", templateVars);
 });
 
 // list available URLs
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, email: '' };  // giving email empty string for now
+  const user = req.cookies["userID"];
+  console.log('user in /urls :', user);
+  const templateVars = { urls: urlDatabase, loggedUserID: user, email: '' };
   res.render("urls_index", templateVars);
 });
 
 // adding a new URL
 app.get("/urls/new", (req, res) => {
-  // const user = res.cookie("userID");
   const user = req.cookies["userID"];
+  console.log('user in /urls/new :', user);
   if (!user) {
     // res.status(400).send("Error: can't use this function unless logged in.");
     res.redirect('/login');
   } else {
     console.log('user from cookies inside adding URL :', user);
-    let templateVars = { urls: urlDatabase, email: '' };  // giving email empty string for now
+    let templateVars = { urls: urlDatabase, email: '', loggedUserID: user };
     res.render("urls_new", templateVars);
   }
 });
 
 // edit an existing URL
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  const user = req.cookies["userID"];
+  console.log('user in /urls/:shortURL :', user);
+  let templateVars = { loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 
@@ -137,7 +146,7 @@ app.post("/urls", (req, res) => {
 // deletion of URL ink
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];  // why are we not using req.body like in "/urls" ?
+  delete urlDatabase[shortURL];
   res.redirect('/urls');
 });
 
@@ -145,13 +154,22 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:shortURL/edit", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = longURL;
-  res.redirect('/urls');
+  const userID = req.cookies["userID"];
+  const email = users[userID].email;
+  urlDatabase[shortURL] = { longURL, userID};
+  // urlDatabase[shortURL] = longURL;
+
+  // let templateVars = { email, loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  let templateVars = { email, loggedUserID: userID, urls: urlDatabase };
+  res.render('urls_index', templateVars);
 });
 
 // edit an existing URL
 app.post("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  const user = req.cookies["userID"];
+  const email = users[user].email;
+  console.log('user in /urls/:shortURL :', user, email);
+  let templateVars = { email, loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 
@@ -166,7 +184,7 @@ app.post("/login", (req, res) => {
   if (userID) { // user has been registered
     if (passwordMatches(userID, password)) {
       res.cookie("userID", userID);
-      let templateVars = { email: email, urls: urlDatabase };
+      let templateVars = { email, loggedUserID: userID, urls: urlDatabase };
       res.render("urls_index", templateVars);
     } else {
       res.status(403).send("Error: password does not match.");
