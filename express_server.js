@@ -44,10 +44,11 @@ const urlDatabase = {
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
-const express = require("express");
+const express = require('express');
 const app = express();
-const bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
+const bcrypt = require('bcrypt');
 
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
@@ -67,9 +68,12 @@ const findEmailInDB = function(emailAddress) {
 };
 
 // check if entered password agrees with stored
-const passwordMatches = function(userID, password) {
-  return (users[userID].password === password);
+const passwordMatches = function(userID, enteredPassword) {
+  return bcrypt.compareSync(enteredPassword,users[userID].password);
 };
+// const passwordMatches = function(userID, password) {
+//   return (users[userID].password === password);
+// };
 
 // default home page
 app.get("/", (req, res) => {
@@ -134,7 +138,7 @@ app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   const userID = req.cookies["userID"];
-  urlDatabase[shortURL] = { longURL: longURL, userID: userID};
+  urlDatabase[shortURL] = { longURL, userID};
   res.redirect('/urls');
 });
 
@@ -175,7 +179,7 @@ app.post("/login", (req, res) => {
       const templateVars = { email, loggedUserID: userID, urls: urlDatabase };
       res.render("urls_index", templateVars);
     } else {
-      res.status(403).send("Error: password does not match.");
+      res.status(403).send("Error: entered password does not match that stored in database.");
     }
   } else {
     res.status(403).send("Error: email registration not found.");
@@ -200,7 +204,8 @@ app.post("/register", (req, res) => {
       res.status(400).send("Error: this e-mail has already been used.");
     } else {
       const userID = generateRandomString();
-      users[userID] = { id: userID, email: email, password: password};
+      const hashedPassword = bcrypt.hashSync(password, 10);
+      users[userID] = { id: userID, email, password: hashedPassword};
       res.redirect("/urls");
     }
   }
