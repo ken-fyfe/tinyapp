@@ -71,25 +71,26 @@ app.get("/hello", (req, res) => {
 
 // que up register page
 app.get("/register", (req, res) => {
-  let templateVars = { email: '' };  // giving username empty string for now
+  let templateVars = { email: '' };  // giving email empty string for now
   res.render("register", templateVars);
 });
 
 // que up login page
 app.get("/login", (req, res) => {
-  let templateVars = { email: '' };  // giving username empty string for now
+  let templateVars = { email: '' };  // giving email empty string for now
   res.render("login", templateVars);
 });
 
-// listing of available URLs
+// list available URLs
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, email: '' };  // giving username empty string for now
+  let templateVars = { urls: urlDatabase, email: '' };  // giving email empty string for now
   res.render("urls_index", templateVars);
 });
 
 // adding a new URL
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  let templateVars = { urls: urlDatabase, email: '' };  // giving email empty string for now
+  res.render("urls_new", templateVars);
 });
 
 // edit an existing URL
@@ -135,45 +136,48 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // save login information
 app.post("/login", (req, res) => {
-  // const userID = req.body.userID;
   const email = req.body.email;
   const password = req.body.password;
-  // console.log('userID :', userID);
   console.log('email :', email);
   console.log('password :', password);
   const userID = findEmailInDB(email);
   console.log('userID :', userID);
-  if (userID) {
+  if (userID) { // user has been registered
     if (passwordMatches(userID, password)) {
       res.cookie("usedID", userID);
       let templateVars = { email: email, urls: urlDatabase };
       res.render("urls_index", templateVars);
     } else {
-      console.log('error 404');
+      res.status(403).send("Error: password does not match.");
     }
   } else {
-    console.log('error 404');
+    res.status(403).send("Error: email registration not found.");
   }
 });
 
-// logout user from platform
+// logout user from platform by removing ID cookie
 app.post("/logout", (req, res) => {
-  res.clearCookie("username"); // delete the username key!
+  res.clearCookie("ID");
   res.redirect("/urls");
 });
 
 // register new user
 app.post("/register", (req, res) => {
-  const userID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  // console.log('userID :', userID);
-  // console.log('email :', email);
-  // console.log('password :', password);
-  users[userID] = { id: userID, email: email, password: password};
-  // console.log('users :', users);
-  res.cookie("ID", users); // delete the username key!
-  res.redirect("/urls");
+  if ((email === '') || (password === '')) {
+    res.status(400).send("Error: email/password fields may not be empty.");
+  } else {
+    const checkUserID = findEmailInDB(email);
+    if (checkUserID) { // user email already used
+      res.status(400).send("Error: this e-mail hass already been used.");
+    } else {
+      const userID = generateRandomString();
+      users[userID] = { id: userID, email: email, password: password};
+      res.cookie("ID", users);
+      res.redirect("/urls");
+    }
+  }
 });
 
 app.listen(PORT, () => {
