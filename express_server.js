@@ -85,23 +85,20 @@ app.get("/hello", (req, res) => {
 // que up register page
 app.get("/register", (req, res) => {
   const user = req.cookies["userID"];
-  console.log('user in /register :', user);
-  let templateVars = { email: '', loggedUserID: user };  // giving email empty string for now
+  const templateVars = { email: '', loggedUserID: user };  // giving email empty string for now
   res.render("register", templateVars);
 });
 
 // que up login page
 app.get("/login", (req, res) => {
   const user = req.cookies["userID"];
-  console.log('user in /login :', user);
-  let templateVars = { email: '' , loggedUserID: user };
+  const templateVars = { email: '' , loggedUserID: user };
   res.render("login", templateVars);
 });
 
 // list available URLs
 app.get("/urls", (req, res) => {
   const user = req.cookies["userID"];
-  console.log('user in /urls :', user);
   const templateVars = { urls: urlDatabase, loggedUserID: user, email: '' };
   res.render("urls_index", templateVars);
 });
@@ -109,13 +106,12 @@ app.get("/urls", (req, res) => {
 // adding a new URL
 app.get("/urls/new", (req, res) => {
   const user = req.cookies["userID"];
-  console.log('user in /urls/new :', user);
   if (!user) {
     // res.status(400).send("Error: can't use this function unless logged in.");
     res.redirect('/login');
   } else {
     console.log('user from cookies inside adding URL :', user);
-    let templateVars = { urls: urlDatabase, email: '', loggedUserID: user };
+    const templateVars = { urls: urlDatabase, email: '', loggedUserID: user };
     res.render("urls_new", templateVars);
   }
 });
@@ -123,8 +119,7 @@ app.get("/urls/new", (req, res) => {
 // edit an existing URL
 app.get("/urls/:shortURL", (req, res) => {
   const user = req.cookies["userID"];
-  console.log('user in /urls/:shortURL :', user);
-  let templateVars = { loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  const templateVars = { loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 
@@ -157,10 +152,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   const userID = req.cookies["userID"];
   const email = users[userID].email;
   urlDatabase[shortURL] = { longURL, userID};
-  // urlDatabase[shortURL] = longURL;
-
-  // let templateVars = { email, loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
-  let templateVars = { email, loggedUserID: userID, urls: urlDatabase };
+  const templateVars = { email, loggedUserID: userID, urls: urlDatabase };
   res.render('urls_index', templateVars);
 });
 
@@ -168,8 +160,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 app.post("/urls/:shortURL", (req, res) => {
   const user = req.cookies["userID"];
   const email = users[user].email;
-  console.log('user in /urls/:shortURL :', user, email);
-  let templateVars = { email, loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  const templateVars = { email, loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 
@@ -177,14 +168,11 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  console.log('email :', email);
-  console.log('password :', password);
   const userID = findEmailInDB(email);
-  console.log('userID :', userID);
   if (userID) { // user has been registered
     if (passwordMatches(userID, password)) {
       res.cookie("userID", userID);
-      let templateVars = { email, loggedUserID: userID, urls: urlDatabase };
+      const templateVars = { email, loggedUserID: userID, urls: urlDatabase };
       res.render("urls_index", templateVars);
     } else {
       res.status(403).send("Error: password does not match.");
