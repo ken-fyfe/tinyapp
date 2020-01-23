@@ -1,5 +1,15 @@
 // creation of a simple server using Express for node JS
 
+// TODO
+// 1) create a function to access user and database data
+// 2) implement a simple manner to access user data:
+//    app.use((req, res) +>    {
+//      const userID = req.session.userID
+//      const user = users[userid]
+//      req.user = user;
+//      next()
+//    })
+
 // generate a string of 6 random alphanumeric characters
 const generateRandomString = function() {
   const alphanum = 'abcdefghijklmnopqrstuvwxyn0123456789';
@@ -39,8 +49,8 @@ app.use(cookieParser());
 const PORT = 8080; // default port 8080
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
 app.set('view engine', 'ejs');
@@ -62,7 +72,8 @@ const passwordMatches = function(userID, password) {
 
 // default home page
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  // res.send("Hello!");
+  res.redirect("/urls");
 });
 
 // hello page
@@ -104,13 +115,13 @@ app.get("/urls/new", (req, res) => {
 
 // edit an existing URL
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 
 // get directed to actual website
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -118,7 +129,8 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = longURL;
+  const userID = req.cookies["userID"];
+  urlDatabase[shortURL] = { longURL: longURL, userID: userID};
   res.redirect('/urls');
 });
 
@@ -139,7 +151,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 // edit an existing URL
 app.post("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 
