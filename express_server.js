@@ -2,31 +2,13 @@
 
 // TODO
 // 1) create a function to access user and database data
-// 2) use compact syntax for objects user: user => user
-
-// create users object
-const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
-  }
-};
-
-const urlDatabase = {
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
-};
 
 const express = require('express');
 const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
+const users = require('./users');
+const urlDatabase = require('./urlDatabase');
 const { findEmailInDB, generateRandomString } = require('./helpers');
 
 const app = express();
