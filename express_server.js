@@ -45,13 +45,23 @@ const urlDatabase = {
 };
 
 const express = require('express');
-const app = express();
-const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({extended: true}));
 const bcrypt = require('bcrypt');
+const bodyParser = require('body-parser');
+const cookieSession = require("cookie-session");
 
-const cookieParser = require("cookie-parser");
-app.use(cookieParser());
+const app = express();
+app.use(bodyParser.urlencoded({extended: true}));
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
+
+// const cookieParser = require("cookie-parser");
+// app.use(cookieParser());
 
 const PORT = 8080; // default port 8080
 
@@ -75,75 +85,99 @@ const passwordMatches = function(userID, enteredPassword) {
 //   return (users[userID].password === password);
 // };
 
+// this gets called for every command to set the user
+app.use((req, res, next) => {
+  const userID = req.session.userID;
+  const user = users[userID];
+  console.log('*** userID in app.use |', userID,'|');
+  req.user = user;
+  next();
+});
+
 // default home page
 app.get("/", (req, res) => {
+  console.log('inside / (get)');
   // res.send("Hello!");
   res.redirect("/urls");
 });
 
 // hello page
 app.get("/hello", (req, res) => {
+  console.log('inside /hello (get)');
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 // que up register page
 app.get("/register", (req, res) => {
-  const user = req.cookies["userID"];
-  const templateVars = { email: '', loggedUserID: user };  // giving email empty string for now
+  console.log('inside /register (get)');
+  // const user = req.cookies["userID"];
+  const userID = req.session.userID;
+  const templateVars = { users, loggedUserID: userID };
   res.render("register", templateVars);
 });
 
 // que up login page
 app.get("/login", (req, res) => {
-  const user = req.cookies["userID"];
-  const templateVars = { email: '' , loggedUserID: user };
+  console.log('inside /login (get)');
+  // const user = req.cookies["userID"];
+  const userID = req.session.userID;
+  console.log('useID in /login from req.user (get)', req.user);
+  const templateVars = { users, loggedUserID: userID };
   res.render("login", templateVars);
 });
 
 // list available URLs
 app.get("/urls", (req, res) => {
-  const user = req.cookies["userID"];
-  const templateVars = { urls: urlDatabase, loggedUserID: user, email: '' };
+  console.log('inside /urls (get)');
+  // const user = req.cookies["userID"];
+  const userID = req.session.userID;
+  const templateVars = { users, urls: urlDatabase, loggedUserID: userID };
   res.render("urls_index", templateVars);
 });
 
 // adding a new URL
 app.get("/urls/new", (req, res) => {
-  const user = req.cookies["userID"];
-  if (!user) {
+  console.log('inside /urls/new (get)');
+  // const user = req.cookies["userID"];
+  const userID = req.session.userID;
+  if (!userID) {
     // res.status(400).send("Error: can't use this function unless logged in.");
     res.redirect('/login');
   } else {
-    console.log('user from cookies inside adding URL :', user);
-    const templateVars = { urls: urlDatabase, email: '', loggedUserID: user };
+    const templateVars = { users, urls: urlDatabase, loggedUserID: userID };
     res.render("urls_new", templateVars);
   }
 });
 
 // edit an existing URL
 app.get("/urls/:shortURL", (req, res) => {
-  const user = req.cookies["userID"];
-  const templateVars = { loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  console.log('inside /urls/:shortURL (get)');
+  const userID = req.session.userID;
+  const templateVars = { users, loggedUserID: userID, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 
 // get directed to actual website
 app.get("/u/:shortURL", (req, res) => {
+  console.log('inside /u/:shortURL (get)');
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
 // generate a tinyURL for longURL
 app.post("/urls", (req, res) => {
+  console.log('inside /urls (post)');
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
-  const userID = req.cookies["userID"];
+  // const userID = req.cookies["userID"];
+  const userID = req.session.userID;
   urlDatabase[shortURL] = { longURL, userID};
   res.redirect('/urls');
 });
 
 // deletion of URL ink
 app.post("/urls/:shortURL/delete", (req, res) => {
+  console.log('inside /urls/:shortURL/delete (post)');
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect('/urls');
@@ -151,32 +185,37 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // updating after editing a long URL
 app.post("/urls/:shortURL/edit", (req, res) => {
+  console.log('inside /urls/:shortURL/edit (post)');
   const longURL = req.body.longURL;
   const shortURL = req.params.shortURL;
-  const userID = req.cookies["userID"];
-  const email = users[userID].email;
+  // const userID = req.cookies["userID"];
+  const userID = req.session.userID;
   urlDatabase[shortURL] = { longURL, userID};
-  const templateVars = { email, loggedUserID: userID, urls: urlDatabase };
+  const templateVars = { users, loggedUserID: userID, urls: urlDatabase };
   res.render('urls_index', templateVars);
 });
 
 // edit an existing URL
 app.post("/urls/:shortURL", (req, res) => {
-  const user = req.cookies["userID"];
-  const email = users[user].email;
-  const templateVars = { email, loggedUserID: user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  console.log('inside /urls/:shortURL (post)');
+  // const user = req.cookies["userID"];
+  const userID = req.session.userID;
+  const templateVars = { users, loggedUserID: userID, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 
 // save login information
 app.post("/login", (req, res) => {
+  console.log('inside /login (post)');
   const email = req.body.email;
   const password = req.body.password;
   const userID = findEmailInDB(email);
   if (userID) { // user has been registered
-    if (passwordMatches(userID, password)) {
-      res.cookie("userID", userID);
-      const templateVars = { email, loggedUserID: userID, urls: urlDatabase };
+    if (passwordMatches(userID, password)) { // write cookie
+      // res.cookie("userID", userID);
+      req.session.userID = userID;
+      console.log('req.session.userID from within /login: (post)', req.session.userID);
+      const templateVars = { users, email, loggedUserID: userID, urls: urlDatabase };
       res.render("urls_index", templateVars);
     } else {
       res.status(403).send("Error: entered password does not match that stored in database.");
@@ -188,12 +227,15 @@ app.post("/login", (req, res) => {
 
 // logout user from platform by removing ID cookie
 app.post("/logout", (req, res) => {
-  res.clearCookie("userID");
+  console.log('inside /logout (post)');
+  // res.clearCookie("userID");
+  req.session = null;
   res.redirect("/urls");
 });
 
 // register new user
 app.post("/register", (req, res) => {
+  console.log('inside /register (post)');
   const email = req.body.email;
   const password = req.body.password;
   if ((email === '') || (password === '')) {
@@ -202,7 +244,7 @@ app.post("/register", (req, res) => {
     const checkUserID = findEmailInDB(email);
     if (checkUserID) { // user email already used
       res.status(400).send("Error: this e-mail has already been used.");
-    } else {
+    } else { // update user database
       const userID = generateRandomString();
       const hashedPassword = bcrypt.hashSync(password, 10);
       users[userID] = { id: userID, email, password: hashedPassword};

@@ -13,37 +13,43 @@
     <%- include ('partials/_header') %>
   </header>
   <main style="margin: 1em;">
-    <h3>My URLs</h3>
-    <table class="table">
-      <thead>
-        <tr>
-          <th scope="col">Short URL</th>
-          <th scope="col">Long URL</th>
-          <th scope="col">Edit</th>
-          <th scope="col">Delete</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% for(let urlID in urls) { %>
-          <% if (urls[urlID].userID === loggedUserID) { %> <!-- only display URLs that user owns -->
-            <tr>
-              <td><%= urlID %></td>
-              <td><%= urls[urlID].longURL %></td>
-              <td>
-                <form method="POST" action= "/urls/<%= urlID %>">
-                  <input type="submit" value="Edit" class="btn btn-outline-primary">
-                </form>
-              </td>
-              <td>
-                <form method="POST" action= "/urls/<%= urlID %>/delete">
-                  <input type="submit" value="Delete" class="btn btn-outline-danger">
-                </form>
-              </td>
-            </tr>
+    <% if (loggedUserID) { %>
+      <h3>My URLs</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Short URL</th>
+            <th scope="col">Long URL</th>
+            <th scope="col">Edit</th>
+            <th scope="col">Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for(let urlID in urls) { %>
+            <% if (urls[urlID].userID === loggedUserID) { %> <!-- only display URLs that user owns -->
+              <tr>
+                <td><%= urlID %></td>
+                <td><%= urls[urlID].longURL %></td>
+                <td>
+                  <form method="POST" action= "/urls/<%= urlID %>">
+                    <input type="submit" value="Edit" class="btn btn-outline-primary">
+                  </form>
+                </td>
+                <td>
+                  <form method="POST" action= "/urls/<%= urlID %>/delete">
+                    <input type="submit" value="Delete" class="btn btn-outline-danger">
+                  </form>
+                </td>
+              </tr>
+            <% } %>
           <% } %>
-        <% } %>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    <% } else { %>
+      <div>
+        You must first <a class="nav-item nav-link" href="/register">Register</a> and then <a class="nav-item nav-link" href="/login">Login</a> to use the app!
+      </div>
+    <% } %>
   </main>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

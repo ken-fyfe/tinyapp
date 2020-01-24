@@ -10,9 +10,11 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
       <div class="navbar-nav ml-auto">
-        <% if (email) { %>
+        <% console.log('id: ', loggedUserID); %>
+        <% console.log(users); %>
+        <% if (loggedUserID) { %>
           <form method="POST" action= "/logout">
-            Logged in as: <%= email %>
+            Logged in as: <%= users[loggedUserID].email %>
             <input type="submit" value="Logout" class="btn btn-outline-dark">
           </form>
         <% } else { %>
