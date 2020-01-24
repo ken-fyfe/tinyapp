@@ -10,8 +10,6 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
       <div class="navbar-nav ml-auto">
-        <% console.log('id: ', loggedUserID); %>
-        <% console.log(users); %>
         <% if (loggedUserID) { %>
           <form method="POST" action= "/logout">
             Logged in as: <%= users[loggedUserID].email %>
