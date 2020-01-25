@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const users = require('./users');
 const urlDatabase = require('./urlDatabase');
-const { findEmailInDB, generateRandomString } = require('./helpers');
+const { getUserByEmail, generateRandomString } = require('./helpers');
 
 const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
@@ -35,7 +35,6 @@ const passwordMatches = function(userID, enteredPassword) {
 app.use((req, res, next) => {
   const userID = req.session.userID;
   const user = users[userID];
-  // console.log('*** userID in app.use |', userID,'|');
   req.user = user;
   next();
 });
@@ -127,7 +126,7 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const userID = findEmailInDB(email, users);
+  const userID = getUserByEmail(email, users);
   if (userID) { // user has been registered
     if (passwordMatches(userID, password)) { // write cookie
       req.session.userID = userID;
@@ -154,7 +153,7 @@ app.post("/register", (req, res) => {
   if ((email === '') || (password === '')) {
     res.status(400).send("Error: email/password fields may not be empty.");
   } else {
-    const checkUserID = findEmailInDB(email, users);
+    const checkUserID = getUserByEmail(email, users);
     if (checkUserID) { // user email already used
       res.status(400).send("Error: this e-mail has already been used.");
     } else { // update user database

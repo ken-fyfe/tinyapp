@@ -2,7 +2,7 @@
 
 // determine if email address exists in database
 // return id if found, false if not found
-const findEmailInDB = function(emailAddress, users) {
+const getUserByEmail = function(emailAddress, users) {
   for (let user in users) {
     if (users[user].email === emailAddress) {
       return users[user].id;
@@ -25,4 +25,4 @@ const generateRandomString = function() {
   return outputString;
 };
 
-module.exports = { findEmailInDB, generateRandomString };
+module.exports = { getUserByEmail, generateRandomString };
