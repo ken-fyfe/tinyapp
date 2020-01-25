@@ -5,10 +5,10 @@ TinyApp is a full stack web application built with Node and Express that allows 
 ## Final Product
 
 To give you a preview of the application, here is the registration (create account) page:
-!["create account"](#)
+!["create account"](https://github.com/ken-fyfe/tinyapp/blob/master/docs/registration%20screen.png)
 
 And here is an image of the URL list page:
-!["URL list"](#)
+!["URL list"](https://github.com/ken-fyfe/tinyapp/blob/master/docs/URL%20index%20page.png)
 
 ## Dependencies
 
