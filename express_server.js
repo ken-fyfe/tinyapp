@@ -8,7 +8,10 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const users = require('./users');
 const urlDatabase = require('./urlDatabase');
-const { getUserByEmail, generateRandomString, getLongURLbyShortURL } = require('./helpers');
+const { getUserByEmail,
+        generateRandomString,
+        getLongURLbyShortURL,
+        shortURLOwnedByUser } = require('./helpers');
 const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
@@ -113,15 +116,24 @@ app.post('/urls', (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   const userID = loggedIn(req);
-  urlDatabase[shortURL] = { longURL, userID};
-  res.redirect('/urls');
+  if (userID) {
+    urlDatabase[shortURL] = { longURL, userID };
+    res.redirect('/urls');
+  } else {
+    res.status(403).send('Error: user must be logged in to make short URL.');
+  }
 });
 
-// deletion of URL ink
+// deletion of URL link
 app.post('/urls/:shortURL/delete', (req, res) => {
-  const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  res.redirect('/urls');
+  const userID = loggedIn(req);
+  if (userID) {
+    const shortURL = req.params.shortURL;
+    delete urlDatabase[shortURL];
+    res.redirect('/urls');
+  } else {
+    res.status(403).send('Error: must login to delete short URLs.');
+  }
 });
 
 // updating after editing a long URL
@@ -137,8 +149,17 @@ app.post('/urls/:shortURL/edit', (req, res) => {
 // edit an existing URL
 app.post('/urls/:shortURL', (req, res) => {
   const userID = loggedIn(req);
-  const templateVars = { users, loggedUserID: userID, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
-  res.render('urls_show', templateVars);
+  if (userID) {
+    const shortURL = req.params.shortURL;
+    if (shortURLOwnedByUser(shortURL, userID, urlDatabase)) {
+      const templateVars = { users, loggedUserID: userID, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+      res.render('urls_show', templateVars);
+    } else {
+      res.status(403).send('Error: short URL not owned by user.');
+    }
+  } else {
+    res.status(403).send('Error: must be logged in.');
+  }
 });
 
 // save login information
@@ -149,7 +170,6 @@ app.post('/login', (req, res) => {
   if (userID) { // user has been registered
     const storedPassword = users[userID].password;
     const passwordMatches = bcrypt.compareSync(password, storedPassword);
-    // if (passwordMatches(userID, password, users)) { // write cookie
     if (passwordMatches) { // write cookie
       req.session.userID = userID;
       const templateVars = { users, email, loggedUserID: userID, urls: urlDatabase };
