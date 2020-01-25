@@ -16,10 +16,12 @@ app.set('view engine', 'ejs');
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2'],
-
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
+
+// TODO: research if it's possible to move all of the below GET and POST actions
+// to a separate action.js file
 
 // this gets called for every command to set the user
 app.use((req, res, next) => {
@@ -29,91 +31,108 @@ app.use((req, res, next) => {
   next();
 });
 
+// check if user is logged in
+const loggedIn = (req) => req.session.userID;
+
 // default home page
-app.get("/", (req, res) => {
-  res.redirect("/urls");
+app.get('/', (req, res) => {
+  if (loggedIn(req)) {
+    res.redirect('/urls');
+  } else {
+    res.redirect('/login');
+  }
 });
 
 // que up register page
-app.get("/register", (req, res) => {
-  const userID = req.session.userID;
-  const templateVars = { users, loggedUserID: userID };
-  res.render("register", templateVars);
+app.get('/register', (req, res) => {
+  const userID = loggedIn(req);
+  if (userID) {
+    res.redirect('urls');
+  } else {
+    const templateVars = { users, loggedUserID: userID };
+    res.render('register', templateVars);
+  }
 });
 
 // que up login page
-app.get("/login", (req, res) => {
-  const userID = req.session.userID;
+app.get('/login', (req, res) => {
+  const userID = loggedIn(req);
   const templateVars = { users, loggedUserID: userID };
-  res.render("login", templateVars);
+  res.render('login', templateVars);
 });
 
 // list available URLs
-app.get("/urls", (req, res) => {
-  const userID = req.session.userID;
+app.get('/urls', (req, res) => {
+  const userID = loggedIn(req);
   const templateVars = { users, urls: urlDatabase, loggedUserID: userID };
-  res.render("urls_index", templateVars);
+  res.render('urls_index', templateVars);
 });
 
 // adding a new URL
-app.get("/urls/new", (req, res) => {
-  const userID = req.session.userID;
-  if (!userID) {
-    res.redirect('/login');
-  } else {
+app.get('/urls/new', (req, res) => {
+  const userID = loggedIn(req);
+  if (userID) {
     const templateVars = { users, urls: urlDatabase, loggedUserID: userID };
-    res.render("urls_new", templateVars);
+    res.render('urls_new', templateVars);
+  } else {
+    res.redirect('/login');
   }
 });
 
 // edit an existing URL
-app.get("/urls/:shortURL", (req, res) => {
-  const userID = req.session.userID;
-  const templateVars = { users, loggedUserID: userID, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
-  res.render("urls_show", templateVars);
+app.get('/urls/:shortURL', (req, res) => {
+  const userID = loggedIn(req);
+  if (userID) {
+    // const shortURL = req.params.shortURL;
+    // console.log('shortURL: in /urls/:shortURL ', shortURL);
+    const templateVars = { users, loggedUserID: userID, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+    res.render('urls_show', templateVars);
+  } else {
+    res.status(403).send('Error: must be logged in to use this feature.');
+  }
 });
 
 // get directed to actual website
-app.get("/u/:shortURL", (req, res) => {
+app.get('/u/:shortURL', (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
 // generate a tinyURL for longURL
-app.post("/urls", (req, res) => {
+app.post('/urls', (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
-  const userID = req.session.userID;
+  const userID = loggedIn(req);
   urlDatabase[shortURL] = { longURL, userID};
   res.redirect('/urls');
 });
 
 // deletion of URL ink
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect('/urls');
 });
 
 // updating after editing a long URL
-app.post("/urls/:shortURL/edit", (req, res) => {
+app.post('/urls/:shortURL/edit', (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = req.params.shortURL;
-  const userID = req.session.userID;
+  const userID = loggedIn(req);
   urlDatabase[shortURL] = { longURL, userID};
   const templateVars = { users, loggedUserID: userID, urls: urlDatabase };
   res.render('urls_index', templateVars);
 });
 
 // edit an existing URL
-app.post("/urls/:shortURL", (req, res) => {
-  const userID = req.session.userID;
+app.post('/urls/:shortURL', (req, res) => {
+  const userID = loggedIn(req);
   const templateVars = { users, loggedUserID: userID, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
-  res.render("urls_show", templateVars);
+  res.render('urls_show', templateVars);
 });
 
 // save login information
-app.post("/login", (req, res) => {
+app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const userID = getUserByEmail(email, users);
@@ -124,41 +143,42 @@ app.post("/login", (req, res) => {
     if (passwordMatches) { // write cookie
       req.session.userID = userID;
       const templateVars = { users, email, loggedUserID: userID, urls: urlDatabase };
-      res.render("urls_index", templateVars);
+      res.render('urls_index', templateVars);
     } else {
-      res.status(403).send("Error: entered password does not match that stored in database.");
+      res.status(403).send('Error: entered password does not match that stored in database.');
     }
   } else {
-    res.status(403).send("Error: email registration not found.");
+    res.status(403).send('Error: email registration not found.');
   }
 });
 
 // logout user from platform by removing ID cookie
-app.post("/logout", (req, res) => {
+app.post('/logout', (req, res) => {
   req.session = null;
-  res.redirect("/urls");
+  res.redirect('/urls');
 });
 
 // register new user
-app.post("/register", (req, res) => {
+app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if ((email === '') || (password === '')) {
-    res.status(400).send("Error: email/password fields may not be empty.");
+    res.status(400).send('Error: email/password fields may not be empty.');
   } else {
     const checkUserID = getUserByEmail(email, users);
     if (checkUserID) { // user email already used
-      res.status(400).send("Error: this e-mail has already been used.");
+      res.status(400).send('Error: this e-mail has already been used.');
     } else { // update user database
       const userID = generateRandomString();
       const hashedPassword = bcrypt.hashSync(password, 10);
       users[userID] = { id: userID, email, password: hashedPassword};
-      res.redirect("/urls");
+      res.redirect('/urls');
     }
   }
 });
 
 const PORT = 8080; // default port 8080
+const dateTime = new Date().toLocaleString('en-US', {timeZone: 'America/Edmonton'});
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`Example app listening on port ${PORT}. Started at ${dateTime}.`);
 });
