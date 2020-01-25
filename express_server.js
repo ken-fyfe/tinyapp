@@ -99,8 +99,13 @@ app.get('/urls/:shortURL', (req, res) => {
 
 // get directed to actual website
 app.get('/u/:shortURL', (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
+  const shortURL = req.params.shortURL;
+  const longURL = getLongURLbyShortURL(shortURL, urlDatabase);
+  if (longURL) {
+    res.redirect(longURL);
+  } else {
+    res.status(403).send('Error: that short URL does not exist.');
+  }
 });
 
 // generate a tinyURL for longURL

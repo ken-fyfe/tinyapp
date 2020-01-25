@@ -15,7 +15,7 @@ const getUserByEmail = function(emailAddress, users) {
 // return long URL if found, false if not found
 const getLongURLbyShortURL = function(shortURL, urlDatabase) {
   for (let keyShortURL in urlDatabase) {
-    if (keyShortURL === shortURL) {
+    if (String(keyShortURL) === String(shortURL)) {
       return urlDatabase[keyShortURL].longURL;
     }
   }
