@@ -11,6 +11,17 @@ const getUserByEmail = function(emailAddress, users) {
   return false;
 };
 
+// determine if short URL exists in database
+// return long URL if found, false if not found
+const getLongURLbyShortURL = function(shortURL, urlDatabase) {
+  for (let keyShortURL in urlDatabase) {
+    if (keyShortURL === shortURL) {
+      return urlDatabase[keyShortURL].longURL;
+    }
+  }
+  return false;
+};
+
 // generate a string of 6 random alphanumeric characters
 const generateRandomString = function() {
   const alphanum = 'abcdefghijklmnopqrstuvwxyn0123456789';
@@ -25,4 +36,4 @@ const generateRandomString = function() {
   return outputString;
 };
 
-module.exports = { getUserByEmail, generateRandomString };
+module.exports = { getUserByEmail, generateRandomString, getLongURLbyShortURL };

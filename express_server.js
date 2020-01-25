@@ -8,7 +8,7 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const users = require('./users');
 const urlDatabase = require('./urlDatabase');
-const { getUserByEmail, generateRandomString } = require('./helpers');
+const { getUserByEmail, generateRandomString, getLongURLbyShortURL } = require('./helpers');
 const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
@@ -83,10 +83,15 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   const userID = loggedIn(req);
   if (userID) {
-    // const shortURL = req.params.shortURL;
-    // console.log('shortURL: in /urls/:shortURL ', shortURL);
-    const templateVars = { users, loggedUserID: userID, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
-    res.render('urls_show', templateVars);
+    const shortURL = req.params.shortURL;
+    const longURL = getLongURLbyShortURL(shortURL);
+    if (longURL) {
+      // const templateVars = { users, loggedUserID: userID, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+      const templateVars = { users, loggedUserID: userID, shortURL, longURL };
+      res.render('urls_show', templateVars);
+    } else {
+      res.status(403).send('Error: that short URL does not exist.');
+    }
   } else {
     res.status(403).send('Error: must be logged in to use this feature.');
   }
@@ -167,7 +172,7 @@ app.post('/register', (req, res) => {
   } else {
     const checkUserID = getUserByEmail(email, users);
     if (checkUserID) { // user email already used
-      res.status(400).send('Error: this e-mail has already been used.');
+      res.status(400).send('Error: this e-mail has already been registered.');
     } else { // update user database
       const userID = generateRandomString();
       const hashedPassword = bcrypt.hashSync(password, 10);
