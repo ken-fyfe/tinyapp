@@ -1,7 +1,6 @@
 // creation of a simple server using Express for node JS
 
-// TODO
-// 1) create a function to access user and database data
+// TODO: create functions to access user and database data to make more general
 
 const express = require('express');
 const bcrypt = require('bcrypt');
@@ -10,9 +9,9 @@ const cookieSession = require('cookie-session');
 const users = require('./users');
 const urlDatabase = require('./urlDatabase');
 const { getUserByEmail, generateRandomString } = require('./helpers');
-
 const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
+app.set('view engine', 'ejs');
 
 app.use(cookieSession({
   name: 'session',
@@ -21,15 +20,6 @@ app.use(cookieSession({
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
-
-const PORT = 8080; // default port 8080
-
-app.set('view engine', 'ejs');
-
-// check if entered password agrees with stored
-const passwordMatches = function(userID, enteredPassword) {
-  return bcrypt.compareSync(enteredPassword,users[userID].password);
-};
 
 // this gets called for every command to set the user
 app.use((req, res, next) => {
@@ -128,7 +118,10 @@ app.post("/login", (req, res) => {
   const password = req.body.password;
   const userID = getUserByEmail(email, users);
   if (userID) { // user has been registered
-    if (passwordMatches(userID, password)) { // write cookie
+    const storedPassword = users[userID].password;
+    const passwordMatches = bcrypt.compareSync(password, storedPassword);
+    // if (passwordMatches(userID, password, users)) { // write cookie
+    if (passwordMatches) { // write cookie
       req.session.userID = userID;
       const templateVars = { users, email, loggedUserID: userID, urls: urlDatabase };
       res.render("urls_index", templateVars);
@@ -165,6 +158,7 @@ app.post("/register", (req, res) => {
   }
 });
 
+const PORT = 8080; // default port 8080
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}! at ${Date()}`);
+  console.log(`Example app listening on port ${PORT}!`);
 });

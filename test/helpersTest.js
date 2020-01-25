@@ -18,9 +18,12 @@ const testUsers = {
 describe('getUserByEmail', function() {
   it('should return a user with valid email', function() {
     const user = getUserByEmail("user@example.com", testUsers);
-    // const user = findEmailInDB("user@example.com", testUsers);
     const expectedOutput = "userRandomID";
     assert.equal(user, expectedOutput);
-    // Write your assert statement here
+  });
+  it('should return false for invalid email', function() {
+    const user = getUserByEmail("abc@abc.com", testUsers);
+    const expectedOutput = false;
+    assert.equal(user, expectedOutput);
   });
 });
